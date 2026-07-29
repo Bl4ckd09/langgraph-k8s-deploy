@@ -129,4 +129,3 @@ def get_graph() -> Any:
     if _GRAPH is None:
         _GRAPH = build_graph()
     return _GRAPH
-

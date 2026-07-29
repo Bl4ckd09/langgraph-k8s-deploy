@@ -39,4 +39,3 @@ def test_unknown_tool_is_an_error() -> None:
 def test_bad_tool_arguments_are_errors(name: str, arguments: dict[str, object]) -> None:
     with pytest.raises(ToolError):
         call_tool(name, arguments)
-

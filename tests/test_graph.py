@@ -29,4 +29,3 @@ def test_graph_routes_directly_to_response_without_a_tool() -> None:
     assert result["tool_name"] is None
     assert result["tool_result"] is None
     assert result["steps"] == ["plan: no tool", "respond"]
-

@@ -104,4 +104,3 @@ def test_mcp_bad_params(client: TestClient) -> None:
         "id": 3,
         "error": {"code": -32602, "message": "Invalid params"},
     }
-
