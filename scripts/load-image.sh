@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="${IMAGE:-langgraph-agentsvc:dev}"
+# Keep this reference fully qualified. Podman prefixes unqualified tags with
+# localhost/, while containerd normalizes them to docker.io/library/. They must
+# agree so imagePullPolicy IfNotPresent can find the preloaded image.
+IMAGE="${IMAGE:-docker.io/library/langgraph-agentsvc:dev}"
 CLUSTER="${CLUSTER:-langgraph-demo}"
 
+engine_works() {
+    "$1" info >/dev/null 2>&1
+}
+
 if [[ -z "${CONTAINER_ENGINE:-}" ]]; then
-    if command -v docker >/dev/null 2>&1; then
+    if engine_works docker; then
         CONTAINER_ENGINE="docker"
-    elif command -v podman >/dev/null 2>&1; then
+    elif engine_works podman; then
         CONTAINER_ENGINE="podman"
     else
-        echo "No container engine found. Set CONTAINER_ENGINE to docker or podman." >&2
+        echo "No working container engine found. Set CONTAINER_ENGINE to docker or podman." >&2
         exit 1
     fi
-fi
-
-if ! command -v "$CONTAINER_ENGINE" >/dev/null 2>&1; then
-    echo "Container engine not found: $CONTAINER_ENGINE" >&2
+elif ! engine_works "$CONTAINER_ENGINE"; then
+    echo "Container engine cannot run: $CONTAINER_ENGINE" >&2
     exit 1
 fi
 
@@ -53,4 +58,31 @@ else
 
     run "$CONTAINER_ENGINE" save --output "$IMAGE_TAR" "$IMAGE"
     run kind load image-archive "$IMAGE_TAR" --name "$CLUSTER"
+fi
+
+printf "+ kind get nodes --name %q\n" "$CLUSTER"
+NODES="$(kind get nodes --name "$CLUSTER")"
+printf "%s\n" "$NODES"
+
+CONTROL_PLANE_NODE=""
+while IFS= read -r node; do
+    if [[ "$node" == *control-plane* ]]; then
+        CONTROL_PLANE_NODE="$node"
+        break
+    fi
+done <<<"$NODES"
+
+if [[ -z "$CONTROL_PLANE_NODE" ]]; then
+    echo "Image verification failed: no control-plane node found in cluster $CLUSTER." >&2
+    exit 1
+fi
+
+printf "+ %q exec %q crictl images\n" "$CONTAINER_ENGINE" "$CONTROL_PLANE_NODE"
+NODE_IMAGES="$("$CONTAINER_ENGINE" exec "$CONTROL_PLANE_NODE" crictl images)"
+printf "%s\n" "$NODE_IMAGES"
+
+IMAGE_REPOSITORY="${IMAGE%:*}"
+if ! grep -Fq -- "$IMAGE_REPOSITORY" <<<"$NODE_IMAGES"; then
+    echo "Image verification failed: repository $IMAGE_REPOSITORY is missing from node $CONTROL_PLANE_NODE." >&2
+    exit 1
 fi

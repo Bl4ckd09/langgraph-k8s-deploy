@@ -7,3 +7,7 @@ __pycache__/
 terraform.tfstate*
 .DS_Store
 
+
+# kind writes a kubeconfig with embedded client certs here
+infra/*-config
+kubeconfig*

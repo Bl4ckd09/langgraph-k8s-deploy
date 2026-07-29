@@ -10,7 +10,7 @@ variable "namespace" {
 
 variable "image" {
   type    = string
-  default = "langgraph-agentsvc:dev"
+  default = "docker.io/library/langgraph-agentsvc:dev"
 }
 
 variable "replicas" {
