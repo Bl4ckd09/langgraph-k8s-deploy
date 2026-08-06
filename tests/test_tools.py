@@ -39,3 +39,16 @@ def test_unknown_tool_is_an_error() -> None:
 def test_bad_tool_arguments_are_errors(name: str, arguments: dict[str, object]) -> None:
     with pytest.raises(ToolError):
         call_tool(name, arguments)
+
+
+@pytest.mark.parametrize(
+    ("name", "arguments"),
+    [
+        ("word_count", {"text": "x" * 4_097}),
+        ("unit_convert", {"value": float("inf"), "from_unit": "c", "to_unit": "f"}),
+        ("unit_convert", {"value": 1_000_000_000_001, "from_unit": "c", "to_unit": "f"}),
+    ],
+)
+def test_bounded_tool_arguments_are_errors(name: str, arguments: dict[str, object]) -> None:
+    with pytest.raises(ToolError):
+        call_tool(name, arguments)

@@ -37,6 +37,20 @@ def test_invoke(client: TestClient) -> None:
     assert body["latency_ms"] >= 0
 
 
+def test_invoke_rejects_oversized_question(client: TestClient) -> None:
+    response = client.post("/invoke", json={"question": "x" * 4_097})
+    assert response.status_code == 422
+
+
+def test_rejects_oversized_request_body(client: TestClient) -> None:
+    response = client.post(
+        "/invoke",
+        content=b"x" * 16_385,
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 413
+
+
 def test_mcp_tools_list(client: TestClient) -> None:
     response = client.post(
         "/mcp",
