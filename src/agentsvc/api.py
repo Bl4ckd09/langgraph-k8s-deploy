@@ -216,8 +216,8 @@ def create_app() -> FastAPI:
                 return _jsonrpc_error(body.id, -32602, "Invalid params")
             try:
                 result = call_tool(params["name"], params["arguments"])
-            except ToolError as exc:
-                return _jsonrpc_error(body.id, -32602, str(exc))
+            except ToolError:
+                return _jsonrpc_error(body.id, -32602, "Invalid tool arguments")
             return {
                 "jsonrpc": "2.0",
                 "id": body.id,

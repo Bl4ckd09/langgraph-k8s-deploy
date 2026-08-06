@@ -118,3 +118,22 @@ def test_mcp_bad_params(client: TestClient) -> None:
         "id": 3,
         "error": {"code": -32602, "message": "Invalid params"},
     }
+
+
+def test_mcp_tool_error_does_not_expose_exception_details(client: TestClient) -> None:
+    response = client.post(
+        "/mcp",
+        json={
+            "jsonrpc": "2.0",
+            "id": 4,
+            "method": "tools/call",
+            "params": {"name": "internal-secret", "arguments": {}},
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "error": {"code": -32602, "message": "Invalid tool arguments"},
+    }
