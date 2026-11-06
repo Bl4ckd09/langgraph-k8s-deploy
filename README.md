@@ -67,6 +67,7 @@ network and framework overhead rather than model inference.
 - Terraform that owns the whole stack, from the cluster to the Service.
 - A CI workflow that deploys to a real cluster and always tears it down.
 - One script, `scripts/ci-local.sh`, that runs the identical steps on a laptop.
+- A localhost-only host port and bounded API request inputs.
 
 ## Architecture
 
@@ -144,7 +145,7 @@ invalid params. The test suite covers both paths.
 | Path | Contents |
 |---|---|
 | `src/agentsvc/` | Graph, tools, FastAPI app, JSON logging |
-| `tests/` | 15 pytest tests over tools, graph routing, and every endpoint |
+| `tests/` | 20 pytest tests over tools, graph routing, bounds, and every endpoint |
 | `Dockerfile` | Two stages, uv for the build, non-root runtime |
 | `infra/` | Terraform: kind cluster, namespace, config map, deployment, Service |
 | `scripts/load-image.sh` | Builds the image and loads it into the kind node |
@@ -166,6 +167,9 @@ invalid params. The test suite covers both paths.
   never finds the preloaded image.
 - Terraform holds cluster credentials in local state. This is fine for a
   throwaway local cluster and wrong for anything shared.
+- The host port binds to `127.0.0.1`. The API has no user authentication and
+  must stay local unless a separate authentication layer is added.
+- HTTP request bodies have a 16 KiB limit. Questions have a 4,096 character limit.
 - One node and one namespace. No ingress, no TLS, no autoscaling, no registry.
 
 ## Licence

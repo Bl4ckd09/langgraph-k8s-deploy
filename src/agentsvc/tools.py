@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -37,6 +38,8 @@ def _word_count(args: dict[str, Any]) -> dict[str, Any]:
     text = args["text"]
     if not isinstance(text, str):
         raise ToolError("text must be a string")
+    if len(text) > 4_096:
+        raise ToolError("text must contain at most 4096 characters")
     return {"words": len(text.split()), "chars": len(text)}
 
 
@@ -48,6 +51,8 @@ def _unit_convert(args: dict[str, Any]) -> dict[str, Any]:
 
     if isinstance(value, bool) or not isinstance(value, int | float):
         raise ToolError("value must be a number")
+    if not math.isfinite(value) or abs(value) > 1_000_000_000_000:
+        raise ToolError("value must be finite and within the supported range")
     if not isinstance(from_unit, str) or not isinstance(to_unit, str):
         raise ToolError("from_unit and to_unit must be strings")
 
@@ -72,7 +77,7 @@ TOOLS: dict[str, OfflineTool] = {
         description="Count the words and characters in text.",
         input_schema={
             "type": "object",
-            "properties": {"text": {"type": "string"}},
+            "properties": {"text": {"type": "string", "maxLength": 4096}},
             "required": ["text"],
             "additionalProperties": False,
         },
@@ -84,7 +89,11 @@ TOOLS: dict[str, OfflineTool] = {
         input_schema={
             "type": "object",
             "properties": {
-                "value": {"type": "number"},
+                "value": {
+                    "type": "number",
+                    "minimum": -1_000_000_000_000,
+                    "maximum": 1_000_000_000_000,
+                },
                 "from_unit": {"type": "string", "enum": ["c", "f", "km", "mi"]},
                 "to_unit": {"type": "string", "enum": ["c", "f", "km", "mi"]},
             },

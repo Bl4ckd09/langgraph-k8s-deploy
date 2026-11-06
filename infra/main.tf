@@ -12,7 +12,7 @@ resource "kind_cluster" "agentsvc" {
       extra_port_mappings {
         container_port = var.node_port
         host_port      = var.node_port
-        listen_address = "0.0.0.0"
+        listen_address = "127.0.0.1"
       }
     }
   }
