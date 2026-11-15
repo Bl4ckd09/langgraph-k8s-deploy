@@ -64,6 +64,8 @@ network and framework overhead rather than model inference.
   the graph compiles.
 - Structured single-line JSON logs with a request ID and a duration per request.
 - A multi-stage Dockerfile that runs as a non-root user, uid 10001.
+  Both image stages use Python 3.12 because the runtime copies the builder's
+  virtual environment.
 - Terraform that owns the whole stack, from the cluster to the Service.
 - A CI workflow that deploys to a real cluster and always tears it down.
 - One script, `scripts/ci-local.sh`, that runs the identical steps on a laptop.

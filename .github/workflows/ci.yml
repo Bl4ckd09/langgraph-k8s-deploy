@@ -19,6 +19,23 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check Docker Python versions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import tomllib
+
+          dockerfile = Path("Dockerfile").read_text().splitlines()
+          version = next(line.split("=", 1)[1] for line in dockerfile if line.startswith("ARG PYTHON_VERSION="))
+          images = [line for line in dockerfile if line.startswith("FROM ")]
+          assert version == "3.12", "Docker Python version must stay on 3.12"
+          assert images == [
+              "FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS builder",
+              "FROM python:${PYTHON_VERSION}-slim AS runtime",
+          ], "Both Docker stages must use PYTHON_VERSION"
+          project = tomllib.loads(Path("pyproject.toml").read_text())["project"]
+          assert project["requires-python"] == f">={version},<3.13", "Docker and project Python versions differ"
+          PY
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
