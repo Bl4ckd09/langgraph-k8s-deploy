@@ -1,4 +1,6 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+# Both stages need Python 3.12: pyproject.toml excludes 3.13, and the runtime uses the builder's venv.
+ARG PYTHON_VERSION=3.12
+FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -11,7 +13,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --frozen --no-dev
 
-FROM python:3.12-slim AS runtime
+FROM python:${PYTHON_VERSION}-slim AS runtime
 
 RUN groupadd --gid 10001 app \
     && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin app
